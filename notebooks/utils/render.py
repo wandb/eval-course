@@ -7,7 +7,8 @@ from rich.markdown import Markdown
 def print_dialogue_data(
     weave_data: Any,
     indexes_to_show: Optional[List[int]] = None,
-    entry_index: int = 0
+    entry_index: int = 0,
+    max_chars: int = 200
 ) -> None:
     """
     Print dialogue data in a formatted way using rich.
@@ -16,6 +17,7 @@ def print_dialogue_data(
         weave_data: WeaveList containing dialogue data
         indexes_to_show: List of indexes to display (defaults to [0, 1] for input/output)
         entry_index: Index of the dialogue entry to show (defaults to 0)
+        max_chars: Maximum number of characters to display for string content (defaults to 200)
     """
     console = Console()
     
@@ -57,7 +59,10 @@ def print_dialogue_data(
             elif data is None:
                 content = "None"
             else:
+                # For string data, truncate if too long
                 content = str(data)
+                if len(content) > max_chars:
+                    content = content[:max_chars] + "..."
             
             # Create title with formatting
             title = Text(f" {label} ", style="bold cyan")
