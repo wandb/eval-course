@@ -73,8 +73,6 @@ class LLMClient(weave.Model):
         if client_type is None:
             if model_name in GOOGLE_MODELS:
                 client_type = ClientType.GEMINI
-            elif model_name in MISTRAL_MODELS:
-                client_type = ClientType.MISTRAL
             elif model_name in OPENAI_MODELS:
                 client_type = ClientType.OPENAI
             else:
@@ -105,7 +103,7 @@ class LLMClient(weave.Model):
             )
         )
         response = model.generate_content(
-            system_prompt + user_prompt, generation_config=generation_config
+            " ".join(system_prompt + user_prompt), generation_config=generation_config
         )
         return response.text if schema is None else response
 
