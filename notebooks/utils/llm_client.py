@@ -1,3 +1,6 @@
+import base64
+import io
+import json
 import os
 from enum import Enum
 from typing import Any, Optional, Union
@@ -5,8 +8,6 @@ from typing import Any, Optional, Union
 import weave
 from PIL import Image
 
-import base64
-import io
 
 def base64_encode_image(image: Image.Image, mimetype: str) -> str:
     image.load()
@@ -55,8 +56,7 @@ OPENAI_MODELS = ["gpt-4o", "gpt-4o-2024-08-06", "gpt-4o-mini", "gpt-4o-mini-2024
 
 
 class LLMClient(weave.Model):
-    """
-    LLMClient is a class that interfaces with different large language model (LLM) providers
+    """LLMClient is a class that interfaces with different large language model (LLM) providers
     such as Google Gemini, Mistral, and OpenAI. It abstracts the complexity of interacting with
     these different APIs and provides a unified interface for making predictions.
 
@@ -89,20 +89,26 @@ class LLMClient(weave.Model):
         import google.generativeai as genai
 
         genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-        model = genai.GenerativeModel(
-          self.model_name, system_instruction=system_prompt
-        )
+        model = genai.GenerativeModel(self.model_name, system_instruction=system_prompt)
         generation_config = (
             None
             if schema is None
             else genai.GenerationConfig(
-                response_mime_type="application/json", response_schema=list[schema]
+                response_mime_type="application/json", response_schema=list[schema],
             )
         )
         response = model.generate_content(
-            user_prompt, generation_config=generation_config
+            user_prompt, generation_config=generation_config,
         )
-        return response.text if schema is None else response
+
+        if schema is None:
+            return response.text
+
+        # Parse structured response
+        if hasattr(response, "candidates"):
+            text = response.candidates[0].content.parts[0].text
+            return json.loads(text.strip("\n"))
+        return response
 
     @weave.op()
     def execute_openai_sdk(
@@ -140,12 +146,12 @@ class LLMClient(weave.Model):
 
         if schema is None:
             completion = client.chat.completions.create(
-                model=self.model_name, messages=messages
+                model=self.model_name, messages=messages,
             )
             return completion.choices[0].message.content
 
         completion = weave.op()(client.beta.chat.completions.parse)(
-            model=self.model_name, messages=messages, response_format=schema
+            model=self.model_name, messages=messages, response_format=schema,
         )
         return completion.choices[0].message.parsed
 
@@ -156,8 +162,7 @@ class LLMClient(weave.Model):
         system_prompt: Optional[Union[str, list[str]]] = None,
         schema: Optional[Any] = None,
     ) -> Union[str, Any]:
-        """
-        Predicts the response from a language model based on the provided prompts and schema.
+        """Predicts the response from a language model based on the provided prompts and schema.
 
         This function determines the client type and calls the appropriate SDK execution function
         to get the response from the language model. It supports multiple client types including
@@ -178,9 +183,8 @@ class LLMClient(weave.Model):
         """
         if self.client_type == ClientType.GEMINI:
             return self.execute_gemini_sdk(user_prompt, system_prompt, schema)
-        elif self.client_type == ClientType.MISTRAL:
+        if self.client_type == ClientType.MISTRAL:
             return self.execute_mistral_sdk(user_prompt, system_prompt, schema)
-        elif self.client_type == ClientType.OPENAI:
+        if self.client_type == ClientType.OPENAI:
             return self.execute_openai_sdk(user_prompt, system_prompt, schema)
-        else:
-            raise ValueError(f"Invalid client type: {self.client_type}")
+        raise ValueError(f"Invalid client type: {self.client_type}")
