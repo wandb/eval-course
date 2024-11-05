@@ -22,7 +22,6 @@ def base64_encode_image(image: Image.Image, mimetype: str) -> str:
 
 class ClientType(str, Enum):
     GEMINI = "gemini"
-    MISTRAL = "mistral"
     OPENAI = "openai"
 
 
@@ -183,8 +182,6 @@ class LLMClient(weave.Model):
         """
         if self.client_type == ClientType.GEMINI:
             return self.execute_gemini_sdk(user_prompt, system_prompt, schema)
-        if self.client_type == ClientType.MISTRAL:
-            return self.execute_mistral_sdk(user_prompt, system_prompt, schema)
         if self.client_type == ClientType.OPENAI:
             return self.execute_openai_sdk(user_prompt, system_prompt, schema)
         raise ValueError(f"Invalid client type: {self.client_type}")
