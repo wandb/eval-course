@@ -7,6 +7,10 @@
 
 This repository contains the code for the [LLM Apps: Evaluation course](https://wandb.ai/site/courses/evals/).
 
+Learn to build reliable evaluation pipelines for LLM applications by combining programmatic checks with LLM-based judges. Develop techniques for automated evaluation, from writing effective criteria to aligning automated scores with human judgment.
+
+For more LLM, MLOps and W&B platform courses visit [AI Academy](https://www.wandb.courses/pages/w-b-courses).
+
 ## Setup
 
 1. Create a new conda environment using the provided `requirements.txt`:
